@@ -58,7 +58,7 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = async () => {
-    try {
+    try { 
       await fetch('/api/auth/logout', { method: 'POST' });
       window.location.href = '/admin/login';
     } catch (e) {
