@@ -37,23 +37,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Upload to Cloudinary using stream
-    const result: any = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          {
-            folder:
-              type === "hero"
-                ? "law-firm/hero"
-                : "law-firm/profile",
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        )
-        .end(buffer);
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json(
+        { success: false, error: "Only image files are allowed" },
+        { status: 400 }
+      );
+    }
+
+
+    const base64 = buffer.toString("base64");
+    const dataUri = `data:${file.type};base64,${base64}`;
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder:
+        type === "hero"
+          ? "law-firm/hero"
+          : "law-firm/profile",
+      resource_type: "image",
     });
+
 
     return NextResponse.json({
       success: true,
