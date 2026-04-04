@@ -30,8 +30,7 @@ export async function PUT(req: NextRequest) {
       { new: true, upsert: true }
     );
 
-    // ✅ THIS is the real fix
-    revalidateTag("content");
+    revalidateTag("content", "max");
 
     return NextResponse.json({ success: true, data: updatedContent });
   } catch (error) {

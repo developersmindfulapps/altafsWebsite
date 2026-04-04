@@ -47,7 +47,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (data.success && data.url) {
         updateNestedState(path, data.url);
-      } else {
+      } else { 
         setContent(backupOriginal);
         alert(data.error || "Upload failed");
       }
