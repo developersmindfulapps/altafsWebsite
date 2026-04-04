@@ -33,7 +33,7 @@ export default function AdminDashboard() {
     
     const sizeInMB = file.size / (1024 * 1024);
     if (type === "hero" && sizeInMB > 10) return alert("Hero image must be less than 10MB");
-    if (type === "profile" && sizeInMB > 3) return alert("Profile image must be less than 3MB");
+    if (type === "profile" && sizeInMB > 5) return alert("Profile image must be less than 3MB");
 
     const formData = new FormData();
     formData.append("file", file);
