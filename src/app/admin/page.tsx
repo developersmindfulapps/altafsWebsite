@@ -42,7 +42,7 @@ export default function AdminDashboard() {
     const backupOriginal = content; // Optimistic mapping fallback
     try {
       // Show optimistic loading state locally
-      updateNestedState(path, "loading...");
+      updateNestedState(path, "");
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (data.success && data.url) {
