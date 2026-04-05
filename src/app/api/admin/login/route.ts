@@ -13,7 +13,10 @@ export async function POST(req: NextRequest) {
   const secret = getAdminSessionSecret();
   if (!secret) {
     return NextResponse.json(
-      { error: "Admin sign-in is not configured." },
+      {
+        error:
+          "Admin sign-in is not configured. Set ADMIN_SESSION_TOKEN in your host (e.g. Vercel → Project → Settings → Environment Variables), use a long random value, save for Production, then redeploy.",
+      },
       { status: 503 }
     );
   }
