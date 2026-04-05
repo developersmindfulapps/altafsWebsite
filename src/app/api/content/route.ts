@@ -47,6 +47,7 @@ export async function PUT(req: NextRequest) {
       { new: true, upsert: true }
     );
 
+    // Next.js 16+: second argument is required (cache life profile).
     revalidateTag("content", "max");
 
     return NextResponse.json({ success: true, data: updatedContent });
