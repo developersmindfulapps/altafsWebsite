@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { LogOut, Save, Plus, Trash2, CheckCircle2, LayoutDashboard, Settings, Home as HomeIcon, Users, User, Search, BookOpen, AlertCircle, UploadCloud } from "lucide-react";
+import { LogOut, Save, Plus, Trash2, CheckCircle2, LayoutDashboard, Settings, Home as HomeIcon, Users, User, Search, BookOpen, AlertCircle, UploadCloud, PanelBottom } from "lucide-react";
+import { AdminIdleLogout } from "@/components/AdminIdleLogout";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("settings");
@@ -9,11 +10,21 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    fetch("/api/content")
-      .then((res) => res.json())
-      .then((data) => {
+    fetch("/api/content", { credentials: "include" })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setLoadError(
+            res.status === 401
+              ? "Session expired or unauthorized. Please sign in again."
+              : "Could not load site content."
+          );
+          setLoading(false);
+          return;
+        }
         if (data.data) {
           setContent(data.data);
         }
@@ -21,6 +32,7 @@ export default function AdminDashboard() {
       })
       .catch((err) => {
         console.error(err);
+        setLoadError("Could not load site content.");
         setLoading(false);
       });
   }, []);
@@ -33,7 +45,7 @@ export default function AdminDashboard() {
     
     const sizeInMB = file.size / (1024 * 1024);
     if (type === "hero" && sizeInMB > 10) return alert("Hero image must be less than 10MB");
-    if (type === "profile" && sizeInMB > 5) return alert("Profile image must be less than 3MB");
+    if (type === "profile" && sizeInMB > 5) return alert("Profile image must be less than 5MB");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -43,7 +55,11 @@ export default function AdminDashboard() {
     try {
       // Show optimistic loading state locally
       updateNestedState(path, "");
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success && data.url) {
         updateNestedState(path, data.url);
@@ -59,7 +75,7 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
       window.location.href = '/admin/login';
     } catch (e) {
       console.error(e);
@@ -73,7 +89,7 @@ export default function AdminDashboard() {
       const res = await fetch("/api/content", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        // Sending the entire monolithic document recursively
+        credentials: "include",
         body: JSON.stringify(content),
       });
       if (res.ok) {
@@ -131,8 +147,28 @@ export default function AdminDashboard() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center pt-24"><div className="animate-pulse flex gap-2"><div className="h-4 w-4 bg-primary rounded-full"></div><div className="h-4 w-4 bg-secondary rounded-full"></div><div className="h-4 w-4 bg-primary rounded-full"></div></div></div>;
 
+  if (loadError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center pt-24 px-4 gap-4">
+        <p className="text-slate-700 text-center max-w-md">{loadError}</p>
+        <a href="/admin/login" className="text-secondary font-semibold underline">
+          Go to sign in
+        </a>
+      </div>
+    );
+  }
+
+  if (!content) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-24 text-slate-600 px-4 text-center">
+        No site content was returned. Check the database and try again.
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 pt-28 pb-12 px-4 sm:px-6 lg:px-8">
+      <AdminIdleLogout />
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
         
         {/* Sidebar Navigation */}
@@ -148,6 +184,7 @@ export default function AdminDashboard() {
                 { id: "settings", label: "Global Settings", icon: <Settings className="h-4 w-4" /> },
                 { id: "homepage", label: "Homepage Editor", icon: <HomeIcon className="h-4 w-4" /> },
                 { id: "lawyers", label: "Lawyers Directory", icon: <Users className="h-4 w-4" /> },
+                { id: "footer", label: "Footer & hours", icon: <PanelBottom className="h-4 w-4" /> },
                 { id: "seo", label: "SEO Configurations", icon: <Search className="h-4 w-4" /> },
                 { id: "blogs", label: "Blogs & Articles", icon: <BookOpen className="h-4 w-4" /> },
               ].map(tab => (
@@ -421,7 +458,85 @@ export default function AdminDashboard() {
             )}
 
             {/* =========================================
-                4. SEO CONFIGURATIONS TAB 
+                4. FOOTER TAB 
+            ========================================= */}
+            {activeTab === "footer" && (
+              <div className="p-6 md:p-8 space-y-8">
+                <h3 className="font-serif text-2xl text-primary border-b border-slate-100 pb-4">
+                  Footer & office hours
+                </h3>
+                <p className="text-sm text-slate-600 max-w-2xl">
+                  These fields power the site footer. Firm name, phone, email, and address are edited under{" "}
+                  <strong>Global Settings</strong>; practice areas and homepage copy stay under{" "}
+                  <strong>Homepage Editor</strong>.
+                </p>
+
+                <div className="space-y-6 max-w-2xl">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                      Brand subtitle (under firm name)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full border border-slate-300 rounded-sm px-4 py-2 bg-slate-50 focus:bg-white"
+                      placeholder="e.g. Advocates & Legal Consultants"
+                      value={content.footer?.brandTagline || ""}
+                      onChange={(e) => updateNestedState(["footer", "brandTagline"], e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                      About blurb
+                    </label>
+                    <textarea
+                      rows={4}
+                      className="w-full border border-slate-300 rounded-sm px-4 py-2 resize-y"
+                      value={content.footer?.aboutText || ""}
+                      onChange={(e) => updateNestedState(["footer", "aboutText"], e.target.value)}
+                    />
+                  </div>
+                  <div className="border-t border-slate-100 pt-6 space-y-4">
+                    <h4 className="font-serif text-lg text-primary">Office hours</h4>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        Monday – Friday
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-slate-300 rounded-sm px-4 py-2"
+                        value={content.footer?.officeHours?.weekdays || ""}
+                        onChange={(e) => updateNestedState(["footer", "officeHours", "weekdays"], e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        Saturday
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-slate-300 rounded-sm px-4 py-2"
+                        value={content.footer?.officeHours?.saturday || ""}
+                        onChange={(e) => updateNestedState(["footer", "officeHours", "saturday"], e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        Sunday
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-slate-300 rounded-sm px-4 py-2"
+                        value={content.footer?.officeHours?.sunday || ""}
+                        onChange={(e) => updateNestedState(["footer", "officeHours", "sunday"], e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* =========================================
+                5. SEO CONFIGURATIONS TAB 
             ========================================= */}
             {activeTab === "seo" && (
               <div className="p-6 md:p-8 space-y-8">
@@ -454,7 +569,7 @@ export default function AdminDashboard() {
             )}
 
             {/* =========================================
-                5. BLOGS STUB TAB 
+                6. BLOGS STUB TAB 
             ========================================= */}
             {activeTab === "blogs" && (
               <div className="p-6 md:p-8 space-y-6">

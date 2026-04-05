@@ -2,67 +2,109 @@ import { NextResponse, NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import connectDB from "@/lib/mongodb";
 import mongoose from "mongoose";
+import { getAdminSessionSecret } from "@/lib/adminSession";
+import { rateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/requestOrigin";
+
+const MAX_EMAIL_LEN = 254;
+const MAX_PASSWORD_LEN = 256;
 
 export async function POST(req: NextRequest) {
-  try {
-    const { email, password } = await req.json();
+  const secret = getAdminSessionSecret();
+  if (!secret) {
+    return NextResponse.json(
+      { error: "Admin sign-in is not configured." },
+      { status: 503 }
+    );
+  }
 
-    // Use our ultra-reliable Mongoose connection pool rather than a native one
-    // This immediately resolves the 'querySrv ETIMEOUT' error!
+  const ip = getClientIp(req);
+
+  const requestBudget = rateLimit(`admin-login-req:${ip}`, 120, 15 * 60 * 1000);
+  if (!requestBudget.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(requestBudget.retryAfterSec) },
+      }
+    );
+  }
+
+  const authFailure = () => {
+    const limited = rateLimit(`admin-login-fail:${ip}`, 20, 15 * 60 * 1000);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: "Too many sign-in attempts. Try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(limited.retryAfterSec) },
+        }
+      );
+    }
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  };
+
+  try {
+    const body = await req.json();
+    const email = typeof body.email === "string" ? body.email.trim() : "";
+    const password =
+      typeof body.password === "string" ? body.password.slice(0, MAX_PASSWORD_LEN) : "";
+
+    if (!email || !password || email.length > MAX_EMAIL_LEN) {
+      return authFailure();
+    }
+
     await connectDB();
     const db = mongoose.connection.useDb("AltafsDB");
 
-    // Collection name EXACTLY matches "site_content"
     const data = await db.collection("site_content").findOne({});
     const admin = data?.admin;
 
-    if (!admin) {
-      console.log("[Auth] Admin document missing in site_content");
-      return NextResponse.json({ error: "Admin not found" }, { status: 500 });
+    if (!admin || typeof admin.email !== "string" || typeof admin.password !== "string") {
+      console.log("[Auth] Admin document missing or invalid in site_content");
+      return authFailure();
     }
 
     if (email !== admin.email) {
-      console.log(`[Auth] Email mismatch: expected ${admin.email}, got ${email}`);
-      return NextResponse.json({ error: "Invalid email" }, { status: 401 });
+      return authFailure();
     }
 
     let isMatch = false;
-    
-    // Check if the database has a bcrypt hash (starts with $2) or plain text
-    if (admin.password.startsWith("$2a$") || admin.password.startsWith("$2b$") || admin.password.startsWith("$2y$")) {
-        isMatch = await bcrypt.compare(password, admin.password);
-    } else {
-        // Fallback for Plain-Text Passwords (like "TEMP_REPLACE_THIS")
-        isMatch = (password === admin.password);
-        if (isMatch) {
-            console.log("[Auth] Note: Logged in using vulnerable plain-text password from DB. Consider hashing it!");
-        }
+    const stored = admin.password;
+    const isBcrypt =
+      stored.startsWith("$2a$") ||
+      stored.startsWith("$2b$") ||
+      stored.startsWith("$2y$");
+
+    if (isBcrypt) {
+      isMatch = await bcrypt.compare(password, stored);
+    } else if (process.env.NODE_ENV !== "production") {
+      isMatch = password === stored;
+      if (isMatch) {
+        console.warn(
+          "[Auth] Plain-text password accepted (development only). Hash the admin password for production."
+        );
+      }
     }
 
     if (!isMatch) {
-      console.log("[Auth] Password mismatch");
-      return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+      return authFailure();
     }
 
-    // Success - generate response
     const response = NextResponse.json({ success: true });
-    
-    // Create cookie matching the local strategy to protect /admin
-    const sessionToken = process.env.ADMIN_SESSION_TOKEN || 'secure_admin_logged_in_default_token';
-    
+
     response.cookies.set({
-      name: 'admin_session',
-      value: sessionToken,
+      name: "admin_session",
+      value: secret,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
     });
 
-    console.log("[Auth] Admin login successful!");
     return response;
-
   } catch (error) {
     console.error("[Auth] Exception during login:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

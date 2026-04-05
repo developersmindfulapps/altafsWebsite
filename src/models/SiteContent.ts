@@ -65,6 +65,7 @@ export interface ISiteContent extends Document {
     keywords: string[];
   };
   footer: {
+    brandTagline: string;
     aboutText: string;
     officeHours: {
       weekdays: string;
@@ -150,6 +151,7 @@ const SiteContentSchema = new Schema<ISiteContent>({
     keywords: { type: [String], default: [] },
   },
   footer: {
+    brandTagline: { type: String, default: "" },
     aboutText: { type: String, default: "" },
     officeHours: {
       weekdays: { type: String, default: "" },

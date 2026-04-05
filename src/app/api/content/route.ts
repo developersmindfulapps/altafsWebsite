@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import SiteContent from "@/models/SiteContent";
 import { getWebsiteContent } from "@/lib/getContent";
-import { revalidateTag } from "next/cache"; // ✅ IMPORTANT
+import { revalidateTag } from "next/cache";
+import { isAdminSessionValid } from "@/lib/adminAuth";
+import { sanitizeContentBody } from "@/lib/sanitizeContentBody";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isAdminSessionValid(req)) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   try {
     await connectDB();
     const content = await getWebsiteContent();
@@ -19,14 +28,22 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
+  if (!isAdminSessionValid(req)) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   try {
     await connectDB();
 
     const body = await req.json();
+    const safe = sanitizeContentBody(body);
 
     const updatedContent = await SiteContent.findOneAndUpdate(
       {},
-      { ...body, updatedAt: new Date() },
+      { ...safe, updatedAt: new Date() },
       { new: true, upsert: true }
     );
 

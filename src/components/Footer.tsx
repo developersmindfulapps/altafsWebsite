@@ -19,7 +19,7 @@ export default async function Footer() {
                   {content.siteSettings.siteName}
                 </span>
                 <span className="text-xs uppercase tracking-widest mt-1 text-white/80">
-                  Advocates & Legal Consultants
+                  {(content.footer.brandTagline || "").trim() || "Advocates & Legal Consultants"}
                 </span>
               </div>
             </Link>

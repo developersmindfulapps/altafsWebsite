@@ -1,21 +1,103 @@
 import { NextRequest, NextResponse } from "next/server";
-import { v2 as cloudinary } from "cloudinary";
+import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
+import { isAdminSessionValid } from "@/lib/adminAuth";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-  api_key: process.env.CLOUDINARY_API_KEY!,
-  api_secret: process.env.CLOUDINARY_API_SECRET!,
-});
+function ensureCloudinaryConfigured() {
+  const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } =
+    process.env;
+  if (
+    !CLOUDINARY_CLOUD_NAME ||
+    !CLOUDINARY_API_KEY ||
+    !CLOUDINARY_API_SECRET
+  ) {
+    return false;
+  }
+  cloudinary.config({
+    cloud_name: CLOUDINARY_CLOUD_NAME,
+    api_key: CLOUDINARY_API_KEY,
+    api_secret: CLOUDINARY_API_SECRET,
+  });
+  return true;
+}
+
+function uploadBuffer(
+  buffer: Buffer,
+  folder: string
+): Promise<UploadApiResponse> {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: "image",
+        unique_filename: true,
+        overwrite: false,
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        if (!result?.public_id) {
+          reject(new Error("Cloudinary upload returned no public_id"));
+          return;
+        }
+        resolve(result);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
+/** Delivery URL with automatic format and quality (smaller files for browsers that support it). */
+function deliveryUrl(publicId: string) {
+  return cloudinary.url(publicId, {
+    secure: true,
+    transformation: [{ fetch_format: "auto", quality: "auto" }],
+  });
+}
 
 export async function POST(req: NextRequest) {
+  if (!isAdminSessionValid(req)) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  if (!ensureCloudinaryConfigured()) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Image upload is not configured (Cloudinary env vars missing).",
+      },
+      { status: 503 }
+    );
+  }
+
   try {
-    const data = await req.formData();
-    const file: File | null = data.get("file") as unknown as File;
-    const type: string = (data.get("type") as string) || "profile";
+    const formData = await req.formData();
+
+    const file = formData.get("file") as File | null;
+    const type = (formData.get("type") as string) || "profile";
 
     if (!file) {
       return NextResponse.json(
         { success: false, error: "No file provided" },
+        { status: 400 }
+      );
+    }
+
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json(
+        { success: false, error: "Only image files are allowed" },
+        { status: 400 }
+      );
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      return NextResponse.json(
+        { success: false, error: "Only JPG, PNG, WEBP allowed" },
         { status: 400 }
       );
     }
@@ -30,40 +112,33 @@ export async function POST(req: NextRequest) {
         { success: false, error: "Hero image must be less than 10MB" },
         { status: 400 }
       );
-    } else if (type === "profile" && sizeInMB > 5) {
+    }
+
+    if (type === "profile" && sizeInMB > 5) {
       return NextResponse.json(
         { success: false, error: "Profile image must be less than 5MB" },
         { status: 400 }
       );
     }
 
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
-        { success: false, error: "Only image files are allowed" },
-        { status: 400 }
-      );
-    }
+    const folder =
+      type === "hero" ? "law-firm/hero" : "law-firm/profile";
 
-
-    const base64 = buffer.toString("base64");
-    const dataUri = `data:${file.type};base64,${base64}`;
-    const result = await cloudinary.uploader.upload(dataUri, {
-      folder:
-        type === "hero"
-          ? "law-firm/hero"
-          : "law-firm/profile",
-      resource_type: "image",
-    });
-
+    const result = await uploadBuffer(buffer, folder);
+    const url = deliveryUrl(result.public_id);
 
     return NextResponse.json({
       success: true,
-      url: result.secure_url,
+      url,
     });
   } catch (error) {
     console.error("Upload error:", error);
+
     return NextResponse.json(
-      { success: false, error: "Server upload failed" },
+      {
+        success: false,
+        error: "Server upload failed",
+      },
       { status: 500 }
     );
   }

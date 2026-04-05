@@ -112,6 +112,7 @@ const DEFAULT_CONTENT: SiteContentData = {
     ]
   },
   footer: {
+    brandTagline: "Advocates & Legal Consultants",
     aboutText: "Premium legal representation at the Jammu District Court and High Court. Committed to delivering exceptional results with integrity and professionalism.",
     officeHours: {
       weekdays: "9:00 AM - 6:00 PM",
@@ -150,6 +151,7 @@ export const getWebsiteContent = unstable_cache(
         bookingPage: { ...DEFAULT_CONTENT.bookingPage, ...content.bookingPage },
         seo: { ...DEFAULT_CONTENT.seo, ...content.seo },
         footer: {
+          brandTagline: content.footer?.brandTagline ?? DEFAULT_CONTENT.footer.brandTagline,
           aboutText: content.footer?.aboutText ?? DEFAULT_CONTENT.footer.aboutText,
           officeHours: { ...DEFAULT_CONTENT.footer.officeHours, ...content.footer?.officeHours }
         },

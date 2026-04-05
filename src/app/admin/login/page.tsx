@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Lock, AlertCircle } from "lucide-react";
 import Button from "@/components/Button";
 
-export default function AdminLogin() {
+function AdminLoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const idleNotice = searchParams.get("reason") === "idle";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +22,7 @@ export default function AdminLogin() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -55,6 +57,12 @@ export default function AdminLogin() {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+          {idleNotice && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-900 text-sm p-4 flex gap-3 rounded-sm items-start">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              <p>You were signed out after 10 minutes of inactivity. Sign in again to continue.</p>
+            </div>
+          )}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-800 text-sm p-4 flex gap-3 rounded-sm items-start">
               <AlertCircle className="h-5 w-5 shrink-0" />
@@ -97,5 +105,13 @@ export default function AdminLogin() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AdminLogin() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center pt-24 text-slate-500 text-sm">Loading…</div>}>
+      <AdminLoginForm />
+    </Suspense>
   );
 }
