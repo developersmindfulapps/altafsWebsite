@@ -83,13 +83,6 @@ export default function Header() {
               </Link>
             </li>
           </ul>
-          <Button
-            href="/book-consultation"
-            variant={isScrolled ? "primary" : "outline"}
-            className={!isScrolled ? "text-white border-white hover:bg-white hover:text-primary" : ""}
-          >
-            Book Consultation
-          </Button>
         </nav>
 
         {/* Mobile Nav Toggle */}
@@ -118,16 +111,7 @@ export default function Header() {
                 {link.name}
               </Link>
             ))}
-            <div className="pt-2 pb-2 block w-full">
-               <Button
-                href="/book-consultation"
-                variant="primary"
-                className="w-full text-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Book Consultation
-              </Button>
-            </div>
+
           </nav>
         </div>
       )}

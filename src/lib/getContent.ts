@@ -1,6 +1,18 @@
 import connectDB from "./mongodb";
-import SiteContent, { ISiteContent } from "@/models/SiteContent";
+import mongoose from "mongoose";
+import { ISiteContent } from "@/models/SiteContent";
 import { unstable_cache } from "next/cache";
+import DefaultSiteContent from "@/models/SiteContent";
+
+// Always read/write site content from AltafsDB — regardless of what URI default database is set
+const DB_NAME = "AltafsDB";
+
+function getSiteContentModel() {
+  // useDb pins this model to AltafsDB explicitly
+  const db = mongoose.connection.useDb(DB_NAME, { useCache: true });
+  // Re-use model if already registered on this db connection, otherwise register fresh
+  return db.models["SiteContent"] ?? db.model("SiteContent", DefaultSiteContent.schema, "site_content");
+}
 
 // Type representing the shape of our fully resolved content (lean Mongo doc)
 export type SiteContentData = Omit<ISiteContent, keyof import("mongoose").Document>;
@@ -128,8 +140,7 @@ export const getWebsiteContent = unstable_cache(
   async (): Promise<SiteContentData> => {
     try {
       await connectDB();
-      // Using exactly what's required:
-      // const data = await db.collection("site_content").findOne({});
+      const SiteContent = getSiteContentModel();
       const content = await SiteContent.findOne({}).lean() as SiteContentData | null;
       
       if (!content) {
@@ -167,5 +178,5 @@ export const getWebsiteContent = unstable_cache(
     }
   },
   ['site-content-v2'],
-  { tags: ['content'], revalidate: 3600 }
+  { tags: ['content'] }
 );

@@ -48,13 +48,6 @@ function uploadBuffer(
   });
 }
 
-/** Delivery URL with automatic format and quality (smaller files for browsers that support it). */
-function deliveryUrl(publicId: string) {
-  return cloudinary.url(publicId, {
-    secure: true,
-    transformation: [{ fetch_format: "auto", quality: "auto" }],
-  });
-}
 
 export async function POST(req: NextRequest) {
   if (!isAdminSessionValid(req)) {
@@ -125,11 +118,10 @@ export async function POST(req: NextRequest) {
       type === "hero" ? "law-firm/hero" : "law-firm/profile";
 
     const result = await uploadBuffer(buffer, folder);
-    const url = deliveryUrl(result.public_id);
 
     return NextResponse.json({
       success: true,
-      url,
+      url: result.secure_url,
     });
   } catch (error) {
     console.error("Upload error:", error);

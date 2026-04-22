@@ -77,7 +77,7 @@ export default async function Home() {
               {content.homepage.hero.subtext}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-16">
-              <Button href="/book-consultation" variant="secondary" className="text-primary hover:bg-white text-sm shadow-xl font-semibold px-8">
+              <Button href="/contact" variant="secondary" className="text-primary hover:bg-white text-sm shadow-xl font-semibold px-8">
                 {content.homepage.hero.ctaPrimary} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button href="/contact" variant="outline" className="text-white border-white/60 hover:bg-white hover:text-primary backdrop-blur-sm px-8">
@@ -193,11 +193,11 @@ export default async function Home() {
             <div className="absolute top-0 left-0 w-full h-1 bg-secondary"></div>
             <h2 className="text-primary mb-6">Take Action on Your Case Today</h2>
             <p className="text-slate-600 text-lg mb-10 leading-relaxed font-light max-w-2xl mx-auto">
-              Do not leave your legal matters to chance. Schedule a confidential consultation with our office to secure the representation you deserve.
+              Do not leave your legal matters to chance. Contact our office for a confidential consultation and secure the representation you deserve.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-6 items-center">
-              <Button href="/book-consultation" className="px-10 py-4 shadow-md text-base w-full sm:w-auto">
-                Schedule Consultation
+              <Button href="/contact" className="px-10 py-4 shadow-md text-base w-full sm:w-auto">
+                Contact Us
               </Button>
               <div className="flex items-center gap-2 text-primary font-medium">
                  <span className="text-slate-400">or call</span>

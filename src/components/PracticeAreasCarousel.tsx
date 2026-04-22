@@ -1,8 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import Link from "next/link";
-import { ArrowRight, ChevronLeft, ChevronRight, Scale, Shield, Award, Briefcase } from "lucide-react";
+import { ChevronLeft, ChevronRight, Scale, Shield, Award, Briefcase } from "lucide-react";
 
 export default function PracticeAreasCarousel({ areas }: { areas: any[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -36,8 +35,8 @@ export default function PracticeAreasCarousel({ areas }: { areas: any[] }) {
           const icons = [Briefcase, Scale, Shield, Award];
           const FallbackIcon = icons[index % icons.length];
           return (
-            <div key={index} className="w-[85vw] md:w-[350px] shrink-0 snap-center md:snap-start h-auto flex pointer-events-none">
-              <Link href="/book-consultation" className="bg-white p-10 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-secondary/30 transition-all duration-300 group flex flex-col w-full rounded-sm pointer-events-auto">
+            <div key={index} className="w-[85vw] md:w-[350px] shrink-0 snap-center md:snap-start h-auto flex">
+              <div className="bg-white p-10 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-secondary/30 transition-all duration-300 group flex flex-col w-full rounded-sm">
                 <div className="h-16 w-16 bg-slate-50 text-secondary border border-secondary/20 rounded-full flex items-center justify-center mb-8 group-hover:bg-secondary group-hover:text-white transition-colors shrink-0">
                   <FallbackIcon className="h-7 w-7" />
                 </div>
@@ -45,10 +44,7 @@ export default function PracticeAreasCarousel({ areas }: { areas: any[] }) {
                 <p className="text-slate-500 leading-relaxed font-light flex-grow">
                   {area.description}
                 </p>
-                <div className="mt-8 shrink-0 flex items-center text-primary font-medium group-hover:text-secondary transition-colors text-sm uppercase tracking-wider">
-                  Learn More <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
-                </div>
-              </Link>
+              </div>
             </div>
           );
         })}

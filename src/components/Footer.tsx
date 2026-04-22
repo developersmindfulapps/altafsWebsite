@@ -43,11 +43,6 @@ export default async function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/book-consultation" className="text-white/80 hover:text-white text-sm transition-colors">
-                  Book Consultation
-                </Link>
-              </li>
-              <li>
                 <Link href="/contact" className="text-white/80 hover:text-white text-sm transition-colors">
                   Contact Us
                 </Link>

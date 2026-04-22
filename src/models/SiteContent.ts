@@ -172,5 +172,8 @@ const SiteContentSchema = new Schema<ISiteContent>({
   updatedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 
+// Export schema separately so other modules can build a model on a specific db connection
+export { SiteContentSchema };
+
 // Specifically mandate the collection name to exactly "site_content" as requested.
 export default mongoose.models.SiteContent || mongoose.model<ISiteContent>("SiteContent", SiteContentSchema, "site_content");
