@@ -4,9 +4,9 @@
  * 
  * Safe for both Client and Server Components.
  */
-export function getOptimizedImageUrl(url: string): string {
+export function getOptimizedImageUrl(url?: string): string {
   if (!url || typeof url !== "string" || !url.includes("res.cloudinary.com")) {
-    return url;
+    return url || "";
   }
   // Avoid double-injecting transformations
   if (url.includes("/image/upload/f_auto") || url.includes("/image/upload/q_auto")) {
