@@ -38,17 +38,46 @@ export default async function Home() {
             "@context": "https://schema.org",
             "@type": "LegalService",
             "name": content.siteSettings.siteName,
+            "description": content.seo.defaultDescription,
             "image": content.siteSettings.logoUrl || "https://altaflawfirmjammu.example.com/logo.png",
-            "@id": "https://altaflawfirmjammu.example.com",
+            "@id": "https://altaflawfirmjammu.example.com#legalservice",
             "url": "https://altaflawfirmjammu.example.com",
             "telephone": content.siteSettings.phone,
+            "email": content.siteSettings.email,
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": content.siteSettings.address.split(',')[0],
+              "streetAddress": content.siteSettings.address,
               "addressLocality": "Jammu",
-              "addressRegion": "J&K",
+              "addressRegion": "Jammu and Kashmir",
+              "postalCode": "180007",
               "addressCountry": "IN"
-            }
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": "32.7551",
+              "longitude": "74.8488"
+            },
+            "areaServed": [
+              { "@type": "AdministrativeArea", "name": "Jammu" },
+              { "@type": "AdministrativeArea", "name": "Kashmir" },
+              { "@type": "AdministrativeArea", "name": "Jammu and Kashmir" }
+            ],
+            "knowsAbout": content.homepage.practiceAreas.map(a => a.title),
+            "openingHoursSpecification": [
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                "opens": "09:00",
+                "closes": "18:00"
+              },
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": "Saturday",
+                "opens": "10:00",
+                "closes": "14:00"
+              }
+            ],
+            "priceRange": "$$"
           })
         }}
       />
