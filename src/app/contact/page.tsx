@@ -3,6 +3,8 @@ import { Mail, MapPin, Phone, AlertCircle } from "lucide-react";
 import Button from "@/components/Button";
 import { getWebsiteContent } from "@/lib/getContent";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Contact Us",
   description: "Get in touch with Sheikh Altaf Hussain Law Firm in Jammu. Schedule a consultation or reach out for legal representation.",

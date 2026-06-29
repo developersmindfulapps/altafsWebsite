@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronDown, GraduationCap, Briefcase, Scale } from "lucide-react";
+import { getOptimizedImageUrl } from "@/lib/cloudinary";
 
 export default function LawyersList({ lawyers }: { lawyers: any[] }) {
   const [openId, setOpenId] = useState<number | null>(1);
@@ -30,7 +31,7 @@ export default function LawyersList({ lawyers }: { lawyers: any[] }) {
             >
               <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
                 <Image
-                  src={lawyer.image}
+                  src={getOptimizedImageUrl(lawyer.image)}
                   alt={lawyer.name}
                   fill
                   className={`object-cover transition-transform duration-700 ${isOpen ? "scale-105" : "group-hover:scale-105"}`}

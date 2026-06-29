@@ -136,47 +136,60 @@ const DEFAULT_CONTENT: SiteContentData = {
   updatedAt: new Date()
 };
 
-export const getWebsiteContent = unstable_cache(
-  async (): Promise<SiteContentData> => {
-    try {
-      await connectDB();
-      const SiteContent = getSiteContentModel();
-      const content = await SiteContent.findOne({}).lean() as SiteContentData | null;
-      
-      if (!content) {
-        return DEFAULT_CONTENT;
-      }
-      
-      // Merge DB content with defaults recursively in case of missing future fields
-      // Map everything together
-      const rawContent = {
-        siteSettings: { ...DEFAULT_CONTENT.siteSettings, ...content.siteSettings },
-        homepage: {
-          hero: { ...DEFAULT_CONTENT.homepage.hero, ...content.homepage?.hero },
-          lawyerIntro: { ...DEFAULT_CONTENT.homepage.lawyerIntro, ...content.homepage?.lawyerIntro },
-          practiceAreas: content.homepage?.practiceAreas?.length ? content.homepage.practiceAreas : DEFAULT_CONTENT.homepage.practiceAreas,
-          trustPoints: content.homepage?.trustPoints?.length ? content.homepage.trustPoints : DEFAULT_CONTENT.homepage.trustPoints,
-        },
-        lawyers: content.lawyers?.length ? content.lawyers : DEFAULT_CONTENT.lawyers,
-        contactPage: { ...DEFAULT_CONTENT.contactPage, ...content.contactPage },
-        bookingPage: { ...DEFAULT_CONTENT.bookingPage, ...content.bookingPage },
-        seo: { ...DEFAULT_CONTENT.seo, ...content.seo },
-        footer: {
-          brandTagline: content.footer?.brandTagline ?? DEFAULT_CONTENT.footer.brandTagline,
-          aboutText: content.footer?.aboutText ?? DEFAULT_CONTENT.footer.aboutText,
-          officeHours: { ...DEFAULT_CONTENT.footer.officeHours, ...content.footer?.officeHours }
-        },
-        blogs: content.blogs || [],
-        updatedAt: content.updatedAt
-      };
-      
-      // JSON serialization strips native MongoDB _id buffer objects which crash Next.js Client Component borders
-      return JSON.parse(JSON.stringify(rawContent));
-    } catch (error) {
-      console.error("Error fetching site_content from DB:", error);
+async function fetchWebsiteContent(): Promise<SiteContentData> {
+  try {
+    await connectDB();
+    const SiteContent = getSiteContentModel();
+    const content = await SiteContent.findOne({}).lean() as SiteContentData | null;
+    
+    if (!content) {
       return DEFAULT_CONTENT;
     }
-  },
+    
+    // Merge DB content with defaults recursively in case of missing future fields
+    // Map everything together
+    const rawContent = {
+      siteSettings: { ...DEFAULT_CONTENT.siteSettings, ...content.siteSettings },
+      homepage: {
+        hero: { ...DEFAULT_CONTENT.homepage.hero, ...content.homepage?.hero },
+        lawyerIntro: { ...DEFAULT_CONTENT.homepage.lawyerIntro, ...content.homepage?.lawyerIntro },
+        practiceAreas: content.homepage?.practiceAreas?.length ? content.homepage.practiceAreas : DEFAULT_CONTENT.homepage.practiceAreas,
+        trustPoints: content.homepage?.trustPoints?.length ? content.homepage.trustPoints : DEFAULT_CONTENT.homepage.trustPoints,
+      },
+      lawyers: content.lawyers?.length ? content.lawyers : DEFAULT_CONTENT.lawyers,
+      contactPage: { ...DEFAULT_CONTENT.contactPage, ...content.contactPage },
+      bookingPage: { ...DEFAULT_CONTENT.bookingPage, ...content.bookingPage },
+      seo: { ...DEFAULT_CONTENT.seo, ...content.seo },
+      footer: {
+        brandTagline: content.footer?.brandTagline ?? DEFAULT_CONTENT.footer.brandTagline,
+        aboutText: content.footer?.aboutText ?? DEFAULT_CONTENT.footer.aboutText,
+        officeHours: { ...DEFAULT_CONTENT.footer.officeHours, ...content.footer?.officeHours }
+      },
+      blogs: content.blogs || [],
+      updatedAt: content.updatedAt
+    };
+    
+    // JSON serialization strips native MongoDB _id buffer objects which crash Next.js Client Component borders
+    return JSON.parse(JSON.stringify(rawContent));
+  } catch (error) {
+    console.error("Error fetching site_content from DB:", error);
+    return DEFAULT_CONTENT;
+  }
+}
+
+const cachedGetWebsiteContent = unstable_cache(
+  fetchWebsiteContent,
   ['site-content-v2'],
   { tags: ['content'] }
 );
+
+export const getWebsiteContent = async (): Promise<SiteContentData> => {
+  if (process.env.NODE_ENV === "development") {
+    return fetchWebsiteContent();
+  }
+  return cachedGetWebsiteContent();
+};
+
+export { getOptimizedImageUrl } from "./cloudinary";
+
+

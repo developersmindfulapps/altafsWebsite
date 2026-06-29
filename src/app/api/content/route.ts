@@ -55,8 +55,8 @@ export async function PUT(req: NextRequest) {
       { new: true, upsert: true }
     );
 
-    // Next.js 16 requires revalidateTag(tag, profile) — "max" means max cache lifetime
-    revalidateTag("content", "max");
+    // Revalidate the Next.js cache for site content
+    revalidateTag("content");
 
     return NextResponse.json({ success: true, data: updatedContent });
   } catch (error) {

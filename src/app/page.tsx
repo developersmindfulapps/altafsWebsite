@@ -2,7 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Scale, Shield, Award, Briefcase, CheckCircle2 } from "lucide-react";
 import Button from "@/components/Button";
-import { getWebsiteContent } from "@/lib/getContent";
+import { getWebsiteContent, getOptimizedImageUrl } from "@/lib/getContent";
+
+export const dynamic = "force-dynamic";
 import PracticeAreasCarousel from "@/components/PracticeAreasCarousel";
 import React from "react";
 
@@ -56,7 +58,7 @@ export default async function Home() {
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[#050D1F]/85 z-10" />
           <Image
-            src={content.homepage.hero.backgroundImageUrl || "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80"}
+            src={getOptimizedImageUrl(content.homepage.hero.backgroundImageUrl) || "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80"}
             alt="Law firm office interior"
             fill
             sizes="100vw"
@@ -113,7 +115,7 @@ export default async function Home() {
             <div className="w-full lg:w-5/12 relative">
               <div className="aspect-[4/5] relative rounded-sm overflow-hidden shadow-2xl ring-1 ring-slate-100">
                 <Image
-                  src={content.homepage.lawyerIntro.imageUrl || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80"}
+                  src={getOptimizedImageUrl(content.homepage.lawyerIntro.imageUrl) || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80"}
                   alt={content.homepage.lawyerIntro.name}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"

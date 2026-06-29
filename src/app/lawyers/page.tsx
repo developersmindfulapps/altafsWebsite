@@ -1,6 +1,8 @@
 import { getWebsiteContent } from "@/lib/getContent";
 import LawyersList from "@/components/LawyersList";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Our Legal Team",
   description: "Meet the experienced advocates dedicated to protecting your rights. Our team brings decades of combined expertise to the courtroom.",
